@@ -1,90 +1,231 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "🎷Jazzhub Universal🎷",
-   Icon = 🎷, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "Rayfield Interface Suite",
-   LoadingSubtitle = "by Jazz",
-   ShowText = "Rayfield", -- for mobile users to unhide Rayfield, change if you'd like
-   Theme = "Amethyst", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+	Name = "🎷Jazzhub Universal🎷",
+	Icon = 0, -- Can use Lucide Icons (string) or Roblox Image (number). 0 for none.
+	LoadingTitle = "Rayfield Interface Suite",
+	LoadingSubtitle = "by Jazz",
+	ShowText = "Rayfield",
+	Theme = "Amethyst",
 
-   ToggleUIKeybind = "K", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+	ToggleUIKeybind = "K",
 
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false, -- Prevents Rayfield from emitting warnings when the script has a version mismatch with the interface.
+	DisableRayfieldPrompts = false,
+	DisableBuildWarnings = false,
 
-   -- ScriptID = "sid_xxxxxxxxxxxx", -- Your Script ID from developer.sirius.menu — enables analytics, managed keys, and script hosting
+	ConfigurationSaving = {
+		Enabled = true,
+		FolderName = nil,
+		FileName = "Jazzhub"
+	},
 
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil, -- Create a custom folder for your hub/game
-      FileName = "Jazzhub"
-   },
+	Discord = {
+		Enabled = true,
+		Invite = "Jazzhub", -- Do not include Discord.gg/
+		RememberJoins = true
+	},
 
-   Discord = {
-      Enabled = true, -- Prompt the user to join your Discord server if their executor supports it
-      Invite = "Discord.gg/Jazzhub", -- The Discord invite code, do not include Discord.gg/. E.g. Discord.gg/ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the Discord every time they load it up
-   },
-
-   KeySystem = false, -- Set this to true to use our key system
-   KeySettings = {
-      Title = "No key No entry",
-      Subtitle = "Key System",
-      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
-      FileName = "Key", -- It is recommended to use something unique, as other scripts using Rayfield may overwrite your key file
-      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"loadstring(game:HttpGet("https://pastebin.com/raw/P1LPEVHK"))()"} -- List of keys that the system will accept, can be RAW file links (pastebin, github, etc.) or simple strings ("hello", "key22")
-   }
+	KeySystem = false,
+	KeySettings = {
+		Title = "No key No entry",
+		Subtitle = "Key System",
+		Note = "No method of obtaining the key is provided",
+		FileName = "Key",
+		SaveKey = true,
+		GrabKeyFromSite = false,
+		Key = { "JazzhubKey" }
+	}
 })
 
-local MainTab = Window:CreateTab("🪽fly🪽", nil) -- Title, Image
-local MainSection = MainTab:CreateSection("Games script that works")
+-- Self-contained Fly Controller
+local Fly = {
+	Enabled = false,
+	Speed = 60,
+	Connection = nil,
+	LinearVelocity = nil,
+	AlignOrientation = nil,
+	Attachment = nil,
+}
+
+local function cleanupFlyForces()
+	if Fly.Connection then
+		Fly.Connection:Disconnect()
+		Fly.Connection = nil
+	end
+	if Fly.LinearVelocity then
+		Fly.LinearVelocity:Destroy()
+		Fly.LinearVelocity = nil
+	end
+	if Fly.AlignOrientation then
+		Fly.AlignOrientation:Destroy()
+		Fly.AlignOrientation = nil
+	end
+	if Fly.Attachment then
+		Fly.Attachment:Destroy()
+		Fly.Attachment = nil
+	end
+end
+
+function Fly.SetEnabled(state: boolean)
+	Fly.Enabled = state
+	local character = LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+	cleanupFlyForces()
+
+	if not state then
+		if humanoid then
+			humanoid.PlatformStand = false
+		end
+		return
+	end
+
+	if not character or not humanoid or not rootPart then
+		Fly.Enabled = false
+		return
+	end
+
+	humanoid.PlatformStand = true
+
+	local attachment = Instance.new("Attachment")
+	attachment.Name = "JazzFlyAttachment"
+	attachment.Parent = rootPart
+
+	local lv = Instance.new("LinearVelocity")
+	lv.Name = "JazzFlyVelocity"
+	lv.Attachment0 = attachment
+	lv.MaxForce = math.huge
+	lv.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+	lv.VectorVelocity = Vector3.zero
+	lv.Parent = rootPart
+
+	local ao = Instance.new("AlignOrientation")
+	ao.Name = "JazzFlyOrientation"
+	ao.Attachment0 = attachment
+	ao.Mode = Enum.OrientationAlignmentMode.OneAttachment
+	ao.MaxTorque = math.huge
+	ao.Responsiveness = 25
+	ao.CFrame = rootPart.CFrame
+	ao.Parent = rootPart
+
+	Fly.Attachment = attachment
+	Fly.LinearVelocity = lv
+	Fly.AlignOrientation = ao
+
+	Fly.Connection = RunService.RenderStepped:Connect(function()
+		if not Fly.Enabled then
+			return
+		end
+
+		local char = LocalPlayer.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local camera = workspace.CurrentCamera
+
+		if not char or not hum or not hrp or not camera then
+			Fly.SetEnabled(false)
+			return
+		end
+
+		hum.PlatformStand = true
+		local moveDir = hum.MoveDirection
+		local flyVelocity = Vector3.zero
+
+		if moveDir.Magnitude > 0 then
+			-- Project movement onto camera look/right vectors for 3D flight
+			local forward = camera.CFrame.LookVector
+			local right = camera.CFrame.RightVector
+			local relativeForward = hrp.CFrame.LookVector:Dot(moveDir)
+			local relativeRight = hrp.CFrame.RightVector:Dot(moveDir)
+
+			local wishDir = (forward * relativeForward + right * relativeRight)
+			if wishDir.Magnitude > 0 then
+				flyVelocity = wishDir.Unit * Fly.Speed
+			end
+		end
+
+		lv.VectorVelocity = flyVelocity
+		ao.CFrame = CFrame.lookAt(hrp.Position, hrp.Position + camera.CFrame.LookVector)
+	end)
+end
+
+function Fly.Toggle()
+	Fly.SetEnabled(not Fly.Enabled)
+	return Fly.Enabled
+end
+
+function Fly.SetSpeed(newSpeed: number)
+	Fly.Speed = math.clamp(tonumber(newSpeed) or Fly.Speed, 1, 500)
+	return Fly.Speed
+end
+
+-- Reset flight cleanly on respawn
+LocalPlayer.CharacterAdded:Connect(function()
+	Fly.SetEnabled(false)
+end)
+
+local MainTab = Window:CreateTab("🪽fly🪽", nil)
+MainTab:CreateSection("Games script that works")
 
 Rayfield:Notify({
-   Title = "You executed the Jazzhub script!!!",
-   Content = "Good gui and fly hacks",
-   Duration = 6.5,
-   Image = nil,
-   Actions = { -- Notification Buttons
-     Ignore = {
-        Name = "Okay!",
-        Callback function()
-        print("the user tapped Okay!")
-     end
-   },
-},
-}}
-
-local Button = MainTab:CreateButton({
-   Name = "🪽Fly🪽",
-   Callback = function()
-        yourToggleButton.MouseButton1Click:Connect(function()
-    local isFlying = Fly.Toggle()
-    yourToggleButton.Text = isFlying and "Fly: ON" or "Fly: OFF"
-end)
-yourSpeedBox.FocusLost:Connect(function()
-    local num = tonumber(yourSpeedBox.Text)
-    local applied = Fly.SetSpeed(num or Fly.Speed)
-    yourSpeedBox.Text = tostring(applied)
-end)
--- Example for a slider callback or button
-Fly.SetSpeed(sliderValue)
--- or: Fly.SetSpeed(Fly.Speed + 10)
-
-   end,
+	Title = "You executed the Jazzhub script!!!",
+	Content = "Good gui and fly hacks",
+	Duration = 6.5,
+	Image = nil,
+	Actions = {
+		Ignore = {
+			Name = "Okay!",
+			Callback = function()
+				print("the user tapped Okay!")
+			end
+		}
+	}
 })
 
-local Slider = MainTab:CreateSlider({
-   Name = "Walkspeed Slider",
-   Range = {0, 300},
-   Increment = 1,
-   Suffix = "Speed",
-   CurrentValue = 16,
-   Flag = "Slider1", -- A flag is the identifier for the configuration file; make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Value)
-     game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = (Value)
-     game.Players.LocalPlayer.Character.Humanoid.JumpPower = (Value)
-   end,
+MainTab:CreateButton({
+	Name = "🪽Fly🪽 (Toggle)",
+	Callback = function()
+		local active = Fly.Toggle()
+		Rayfield:Notify({
+			Title = "Fly Status",
+			Content = active and ("Fly Enabled (Speed: " .. tostring(Fly.Speed) .. ")") or "Fly Disabled",
+			Duration = 2.5,
+			Image = nil
+		})
+	end,
+})
+
+MainTab:CreateSlider({
+	Name = "Fly Speed Slider",
+	Range = {10, 300},
+	Increment = 5,
+	Suffix = "FlySpeed",
+	CurrentValue = 60,
+	Flag = "FlySpeedSlider",
+	Callback = function(Value)
+		Fly.SetSpeed(Value)
+	end,
+})
+
+MainTab:CreateSlider({
+	Name = "Walkspeed Slider",
+	Range = {0, 300},
+	Increment = 1,
+	Suffix = "Speed",
+	CurrentValue = 16,
+	Flag = "Slider1",
+	Callback = function(Value)
+		local character = LocalPlayer.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = Value
+			humanoid.UseJumpPower = true
+			humanoid.JumpPower = Value
+		end
+	end,
 })
