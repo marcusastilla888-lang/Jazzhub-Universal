@@ -37,7 +37,7 @@ local Window = Rayfield:CreateWindow({
 		FileName = "Key",
 		SaveKey = true,
 		GrabKeyFromSite = false,
-		Key = { "JazzhubKey" }
+		Key = { "https://lootdest.org/s?jr9kjF4t" }
 	}
 })
 
