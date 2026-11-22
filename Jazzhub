@@ -4,6 +4,8 @@ local LocalPlayer = Players.LocalPlayer
 
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
+local KeyLink = "https://lootdest.org/s?jr9kjF4t"
+
 local Window = Rayfield:CreateWindow({
 	Name = "🎷Jazzhub Universal🎷",
 	Icon = 0, -- Can use Lucide Icons (string) or Roblox Image (number). 0 for none.
@@ -33,11 +35,11 @@ local Window = Rayfield:CreateWindow({
 	KeySettings = {
 		Title = "No key No entry",
 		Subtitle = "Key System",
-		Note = "No method of obtaining the key is provided",
+		Note = "Get your key here: " .. KeyLink,
 		FileName = "Key",
 		SaveKey = true,
 		GrabKeyFromSite = false,
-		Key = { "https://lootdest.org/s?jr9kjF4t" }
+		Key = { KeyLink }
 	}
 })
 
@@ -197,6 +199,28 @@ MainTab:CreateButton({
 			Duration = 2.5,
 			Image = nil
 		})
+	end,
+})
+
+MainTab:CreateButton({
+	Name = "🔑 Copy Key Link",
+	Callback = function()
+		if setclipboard then
+			setclipboard(KeyLink)
+			Rayfield:Notify({
+				Title = "Key Link Copied",
+				Content = KeyLink,
+				Duration = 4,
+				Image = nil
+			})
+		else
+			Rayfield:Notify({
+				Title = "Key Link",
+				Content = KeyLink,
+				Duration = 6,
+				Image = nil
+			})
+		end
 	end,
 })
 
