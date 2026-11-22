@@ -35,11 +35,11 @@ local Window = Rayfield:CreateWindow({
 	KeySettings = {
 		Title = "No key No entry",
 		Subtitle = "Key System",
-		Note = "Get your key here: " .. https://lootdest.org/s?jr9kjF4t,
+		Note = "Get your key here: " .. KeyLink,
 		FileName = "Key",
 		SaveKey = true,
 		GrabKeyFromSite = false,
-		Key = { Jazzhubkeynumber1 }
+		Key = { KeyLink }
 	}
 })
 
