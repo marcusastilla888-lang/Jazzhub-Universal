@@ -6,6 +6,7 @@ local LocalPlayer = Players.LocalPlayer
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local KeyLink = "https://lootdest.org/s?jr9kjF4t"
+local ValidKeys = { "https://lootdest.org/s?jr9kjF4t" } -- Replace with your actual key(s) or a RAW URL if GrabKeyFromSite = true
 
 local Window = Rayfield:CreateWindow({
 	Name = "🎷Jazzhub Universal🎷",
@@ -37,10 +38,10 @@ local Window = Rayfield:CreateWindow({
 		Title = "No key No entry",
 		Subtitle = "Key System",
 		Note = "Get your key here: " .. KeyLink,
-		FileName = "Key",
+		FileName = "JazzhubKeyFile",
 		SaveKey = true,
-		GrabKeyFromSite = false,
-		Key = { https://lootdest.org/s?jr9kjF4t } -- Replace with actual key string(s) if using a key generator
+		GrabKeyFromSite = true, -- Set to true if Key contains a RAW text link (e.g. Pastebin/GitHub raw)
+		Key = ValidKeys
 	}
 })
 
