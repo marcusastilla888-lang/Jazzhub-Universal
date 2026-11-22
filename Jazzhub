@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
@@ -39,7 +40,7 @@ local Window = Rayfield:CreateWindow({
 		FileName = "Key",
 		SaveKey = true,
 		GrabKeyFromSite = false,
-		Key = { KeyLink }
+		Key = { https://lootdest.org/s?jr9kjF4t } -- Replace with actual key string(s) if using a key generator
 	}
 })
 
@@ -138,17 +139,36 @@ function Fly.SetEnabled(state: boolean)
 		local moveDir = hum.MoveDirection
 		local flyVelocity = Vector3.zero
 
-		if moveDir.Magnitude > 0 then
-			-- Project movement onto camera look/right vectors for 3D flight
-			local forward = camera.CFrame.LookVector
-			local right = camera.CFrame.RightVector
-			local relativeForward = hrp.CFrame.LookVector:Dot(moveDir)
-			local relativeRight = hrp.CFrame.RightVector:Dot(moveDir)
+		-- Convert world MoveDirection into camera-relative movement
+		local camFlatForward = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+		if camFlatForward.Magnitude > 0 then
+			camFlatForward = camFlatForward.Unit
+		end
+		local camFlatRight = Vector3.new(camera.CFrame.RightVector.X, 0, camera.CFrame.RightVector.Z)
+		if camFlatRight.Magnitude > 0 then
+			camFlatRight = camFlatRight.Unit
+		end
 
-			local wishDir = (forward * relativeForward + right * relativeRight)
-			if wishDir.Magnitude > 0 then
-				flyVelocity = wishDir.Unit * Fly.Speed
+		local forwardAmount = camFlatForward:Dot(moveDir)
+		local rightAmount = camFlatRight:Dot(moveDir)
+
+		-- Fly along camera look vector when moving forward, or flat horizontal when strafing/backing up
+		local wishDir = (camera.CFrame.LookVector * math.max(forwardAmount, 0))
+			+ (camFlatForward * math.min(forwardAmount, 0))
+			+ (camFlatRight * rightAmount)
+
+		-- Optional Space / LeftControl vertical adjustment while flying
+		if not UserInputService:GetFocusedTextBox() then
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+				wishDir += Vector3.yAxis
 			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+				wishDir -= Vector3.yAxis
+			end
+		end
+
+		if wishDir.Magnitude > 0 then
+			flyVelocity = wishDir.Unit * Fly.Speed
 		end
 
 		lv.VectorVelocity = flyVelocity
@@ -248,8 +268,6 @@ MainTab:CreateSlider({
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
 			humanoid.WalkSpeed = Value
-			humanoid.UseJumpPower = true
-			humanoid.JumpPower = Value
 		end
 	end,
 })
