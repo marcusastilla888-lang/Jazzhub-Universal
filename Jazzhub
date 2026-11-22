@@ -6,7 +6,33 @@ local LocalPlayer = Players.LocalPlayer
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local KeyLink = "https://lootdest.org/s?jr9kjF4t"
-local ValidKeys = { "https://lootdest.org/s?jr9kjF4t" } -- Replace with your actual key(s) or a RAW URL if GrabKeyFromSite = true
+local ValidKeys = { "Jazzhubkeynumber1" } -- Replace with your actual key(s) or a RAW URL if GrabKeyFromSite = true
+local AutoCopyKey = true
+
+local function copyToClipboard(text: string, label: string)
+	if setclipboard then
+		setclipboard(text)
+		Rayfield:Notify({
+			Title = label .. " Copied",
+			Content = text,
+			Duration = 4,
+			Image = nil
+		})
+		return true
+	else
+		Rayfield:Notify({
+			Title = label,
+			Content = text,
+			Duration = 6,
+			Image = nil
+		})
+		return false
+	end
+end
+
+if AutoCopyKey and ValidKeys[1] then
+	copyToClipboard(ValidKeys[1], "Key")
+end
 
 local Window = Rayfield:CreateWindow({
 	Name = "🎷Jazzhub Universal🎷",
@@ -41,7 +67,7 @@ local Window = Rayfield:CreateWindow({
 		FileName = "JazzhubKeyFile",
 		SaveKey = true,
 		GrabKeyFromSite = true, -- Set to true if Key contains a RAW text link (e.g. Pastebin/GitHub raw)
-		Key = ValidKeys
+		Key = Jazzhubkeynumber1
 	}
 })
 
@@ -224,24 +250,18 @@ MainTab:CreateButton({
 })
 
 MainTab:CreateButton({
+	Name = "📋 Copy Key",
+	Callback = function()
+		if ValidKeys[1] then
+			copyToClipboard(ValidKeys[1], "Key")
+		end
+	end,
+})
+
+MainTab:CreateButton({
 	Name = "🔑 Copy Key Link",
 	Callback = function()
-		if setclipboard then
-			setclipboard(KeyLink)
-			Rayfield:Notify({
-				Title = "Key Link Copied",
-				Content = KeyLink,
-				Duration = 4,
-				Image = nil
-			})
-		else
-			Rayfield:Notify({
-				Title = "Key Link",
-				Content = KeyLink,
-				Duration = 6,
-				Image = nil
-			})
-		end
+		copyToClipboard(KeyLink, "Key Link")
 	end,
 })
 
